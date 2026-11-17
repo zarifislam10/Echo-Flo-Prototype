@@ -9,6 +9,16 @@ export default defineConfig({
     // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
+    // Resolve figma:asset/ imports to actual files in src/assets/
+    {
+      name: 'figma-asset-resolver',
+      resolveId(source) {
+        const match = source.match(/^figma:asset\/(.+)$/);
+        if (match) {
+          return path.resolve(__dirname, 'src/assets', match[1]);
+        }
+      },
+    },
   ],
   resolve: {
     alias: {
@@ -16,6 +26,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+
+  // Use relative paths so the build works in subfolders (e.g. Neocities)
+  base: './',
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],

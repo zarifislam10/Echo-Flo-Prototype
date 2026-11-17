@@ -1,10 +1,12 @@
 import { useNavigate, useLocation } from "react-router";
-import { Home, BarChart3, Heart } from "lucide-react";
+import { Home, BarChart3, Heart, Eye, Settings } from "lucide-react";
 
 const navItems = [
   { icon: Home, path: "/", label: "Home" },
   { icon: BarChart3, path: "/graph", label: "Graph" },
+  { icon: Eye, path: "/vision", label: "Vision" },
   { icon: Heart, path: "/health", label: "Health" },
+  { icon: Settings, path: "/settings", label: "Settings" },
 ];
 
 export function BottomNav() {
@@ -12,9 +14,12 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-4 px-4">
+    <div
+      className="shrink-0 flex justify-center px-4 pb-4 pt-2"
+      style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
+    >
       <div
-        className="flex items-center gap-2 rounded-full px-4 py-3"
+        className="flex items-center gap-1 rounded-full px-3 py-2"
         style={{
           background: "rgba(255,255,255,0.45)",
           border: "1px solid rgba(255,255,255,0.6)",
@@ -24,12 +29,15 @@ export function BottomNav() {
         }}
       >
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive =
+            item.path === "/"
+              ? location.pathname === "/"
+              : location.pathname.startsWith(item.path);
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`flex items-center justify-center rounded-full p-3 transition-all duration-300 ${
+              className={`flex items-center justify-center rounded-full p-2.5 transition-all duration-300 ${
                 isActive
                   ? "shadow-inner"
                   : "opacity-50 hover:opacity-100"
@@ -42,9 +50,10 @@ export function BottomNav() {
                     }
                   : undefined
               }
+              aria-label={item.label}
             >
               <item.icon
-                size={22}
+                size={20}
                 className={isActive ? "text-slate-800" : "text-slate-600"}
               />
             </button>

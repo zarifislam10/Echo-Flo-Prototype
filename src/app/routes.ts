@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createHashRouter } from "react-router";
 import { Layout } from "./components/Layout";
 import { HomePage } from "./components/HomePage";
 import { GraphPage } from "./components/GraphPage";
@@ -7,7 +7,8 @@ import { VisionPage } from "./components/VisionPage";
 import { HealthPage } from "./components/HealthPage";
 import { SettingsPage } from "./components/SettingsPage";
 
-export const router = createBrowserRouter([
+// Hash router for static hosting (Neocities, GitHub Pages, etc.)
+export const router = createHashRouter([
   {
     path: "/",
     Component: Layout,

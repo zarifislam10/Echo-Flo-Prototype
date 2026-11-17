@@ -3,22 +3,21 @@ import { useNavigate } from "react-router";
 import { Home, Settings, ChevronRight } from "lucide-react";
 import { GlassCard } from "./GlassCard";
 import { EchoLogo } from "./EchoLogo";
+import { useSettings } from "../settingsStore";
 
 const TIME_RANGES = ["1H", "6H", "1D", "1W", "1M"];
 
-// Generate a pure sine wave path with many sample points for a perfectly smooth look
 function generateSineWavePath(
   tick: number,
   phaseOffset: number,
   cycles: number,
-  amplitude: number,  // 0–1 fraction of half-height
+  amplitude: number,
   W: number,
   H: number,
   padX = 18,
   padY = 16
 ): string {
   const samples = 160;
-  const cx = W / 2;
   const cy = H / 2;
   const amp = amplitude * (H / 2 - padY);
   let d = "";
@@ -64,7 +63,6 @@ function FullChart({ configs, activeFilter, tick }: { configs: ChartConfig[]; ac
         const path = generateSineWavePath(tick * c.speed, c.phaseOffset, c.cycles, c.amplitude, W, H);
         return (
           <g key={c.label} style={{ transition: "opacity 0.5s ease" }} opacity={isActive ? 1 : 0.1}>
-            {/* soft glow duplicate */}
             <path
               d={path}
               fill="none"
@@ -74,7 +72,6 @@ function FullChart({ configs, activeFilter, tick }: { configs: ChartConfig[]; ac
               strokeLinejoin="round"
               opacity="0.18"
             />
-            {/* main crisp line */}
             <path
               d={path}
               fill="none"
@@ -103,6 +100,7 @@ function MiniStat({ label, value, change, changeColor }: { label: string; value:
 
 export function GraphPage() {
   const navigate = useNavigate();
+  const settings = useSettings();
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [timeRange, setTimeRange] = useState("1D");
   const [socialVal, setSocialVal] = useState(258);
@@ -113,7 +111,8 @@ export function GraphPage() {
   const filters = ["ALL", "SOCIAL", "AMBIENT", "NEUTRAL"];
 
   useEffect(() => {
-    let t = 0;
+    if (settings.scanningPaused) return;
+    let t = tick;
     const animate = () => {
       t += 0.04;
       setTick(t);
@@ -121,7 +120,7 @@ export function GraphPage() {
     };
     animRef.current = requestAnimationFrame(animate);
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
-  }, []);
+  }, [settings.scanningPaused]);
 
   const configs: ChartConfig[] = [
     { color: "#3B82F6", label: "SOCIAL",  gradId: "socialGrad",  cycles: 3,   amplitude: 0.72, phaseOffset: 0,               speed: 0.6  },
@@ -130,15 +129,16 @@ export function GraphPage() {
   ];
 
   useEffect(() => {
+    if (settings.scanningPaused) return;
     const interval = setInterval(() => {
       setSocialVal((s) => s + Math.floor(Math.random() * 3));
       setAmbientVal((a) => Math.max(50, Math.min(99, a + Math.floor(Math.random() * 5) - 2)));
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [settings.scanningPaused]);
 
   return (
-    <div className="flex flex-col items-center px-4 pt-6 pb-28 min-h-full" style={{ fontFamily: "'Outfit', sans-serif" }}>
+    <div className="flex flex-col items-center px-4 pt-6 pb-6 min-h-full" style={{ fontFamily: "'Outfit', sans-serif" }}>
       <div className="w-full flex justify-between items-start mb-2">
         <button
           onClick={() => navigate("/")}
@@ -186,7 +186,10 @@ export function GraphPage() {
 
       <GlassCard className="w-full p-4 mb-4">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-slate-600 tracking-widest" style={{ fontSize: 12 }}>SIGNAL ACTIVITY</span>
+          <div className="flex items-center gap-2">
+            <span className="text-slate-600 tracking-widest" style={{ fontSize: 12 }}>SIGNAL ACTIVITY</span>
+            <span className="text-slate-400" style={{ fontSize: 9 }}>SIMULATED</span>
+          </div>
           <div className="flex items-center gap-3">
             {configs.map((c) => (
               <div key={c.label} className="flex items-center gap-1">

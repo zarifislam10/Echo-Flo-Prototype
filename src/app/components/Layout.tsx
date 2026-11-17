@@ -7,7 +7,7 @@ export function Layout() {
 
   return (
     <div className="relative w-full h-dvh flex justify-center bg-[#cdd3de]">
-      <div className="relative w-full max-w-[430px] h-full overflow-hidden">
+      <div className="relative w-full max-w-[430px] h-full overflow-hidden flex flex-col">
         {/* Background */}
         {!isVisionPage && (
           <div className="absolute inset-0 pointer-events-none">
@@ -20,7 +20,7 @@ export function Layout() {
               }}
             />
 
-            {/* Dark blue-grey blob — top left */}
+            {/* Dark blue-grey blob - top left */}
             <div
               className="absolute"
               style={{
@@ -35,7 +35,7 @@ export function Layout() {
               }}
             />
 
-            {/* Deep navy blob — center */}
+            {/* Deep navy blob - center */}
             <div
               className="absolute"
               style={{
@@ -51,7 +51,7 @@ export function Layout() {
               }}
             />
 
-            {/* Blue-steel blob — top right */}
+            {/* Blue-steel blob - top right */}
             <div
               className="absolute"
               style={{
@@ -66,7 +66,7 @@ export function Layout() {
               }}
             />
 
-            {/* Bright silver highlight — middle */}
+            {/* Bright silver highlight - middle */}
             <div
               className="absolute"
               style={{
@@ -82,7 +82,7 @@ export function Layout() {
               }}
             />
 
-            {/* Light warm glow — bottom */}
+            {/* Light warm glow - bottom */}
             <div
               className="absolute"
               style={{
@@ -100,12 +100,12 @@ export function Layout() {
           </div>
         )}
 
-        {/* Content */}
-        <div className="relative w-full h-full overflow-y-auto overflow-x-hidden">
+        {/* Content — scrollable, with bottom padding for nav */}
+        <div className="relative flex-1 overflow-y-auto overflow-x-hidden">
           <Outlet />
         </div>
 
-        {/* Bottom Nav */}
+        {/* Bottom Nav — inside the 430px column */}
         <BottomNav />
       </div>
     </div>

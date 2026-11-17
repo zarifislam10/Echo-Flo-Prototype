@@ -54,7 +54,7 @@ export function ColorKeyPage() {
 
   return (
     <div
-      className="flex flex-col items-center px-4 pt-6 pb-28 min-h-full"
+      className="flex flex-col items-center px-4 pt-6 pb-6 min-h-full"
       style={{ fontFamily: "'Outfit', sans-serif" }}
     >
       {/* Header */}

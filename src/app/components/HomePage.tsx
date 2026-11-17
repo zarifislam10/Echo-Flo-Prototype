@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Settings, Users, Hexagon, Radio, ChevronRight, Heart, Activity } from "lucide-react";
 import { GlassCard } from "./GlassCard";
 import { EchoLogo } from "./EchoLogo";
+import { useSettings } from "../settingsStore";
 import imgGlasses from "figma:asset/02814927535adfce0124e346010f41ee8018e48a.png";
 
 // Generate a smooth wave Y value from layered sine waves that scroll continuously
@@ -34,12 +35,13 @@ function buildSmoothPath(points: { x: number; y: number }[]) {
   return d;
 }
 
-function DashboardChart({ activeFilter }: { activeFilter: string }) {
+function DashboardChart({ activeFilter, paused }: { activeFilter: string; paused: boolean }) {
   const tickRef = useRef(0);
   const animRef = useRef<number>();
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
+    if (paused) return;
     const animate = () => {
       tickRef.current += 0.018;
       forceUpdate((n) => n + 1);
@@ -47,7 +49,7 @@ function DashboardChart({ activeFilter }: { activeFilter: string }) {
     };
     animRef.current = requestAnimationFrame(animate);
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
-  }, []);
+  }, [paused]);
 
   const t = tickRef.current;
 
@@ -64,7 +66,6 @@ function DashboardChart({ activeFilter }: { activeFilter: string }) {
   };
   const c = colors[activeFilter] || colors.SOCIAL;
 
-  // Sample main wave points — x shifts with time for continuous scrolling
   const points: { x: number; y: number }[] = [];
   for (let i = 0; i <= numPoints; i++) {
     const px = padX + (i / numPoints) * (W - padX * 2);
@@ -72,7 +73,6 @@ function DashboardChart({ activeFilter }: { activeFilter: string }) {
     points.push({ x: px, y: Math.max(10, Math.min(H - 10, py)) });
   }
 
-  // Secondary ghost wave (offset phase)
   const points2: { x: number; y: number }[] = [];
   for (let i = 0; i <= numPoints; i++) {
     const px = padX + (i / numPoints) * (W - padX * 2);
@@ -101,9 +101,7 @@ function DashboardChart({ activeFilter }: { activeFilter: string }) {
           <stop offset="100%" stopColor={c.main} stopOpacity="0" />
         </linearGradient>
       </defs>
-      {/* Area fill under main wave */}
       <path d={areaPath} fill="url(#chartAreaGrad)" />
-      {/* Secondary ghost wave */}
       <path
         d={secondPath}
         fill="none"
@@ -113,7 +111,6 @@ function DashboardChart({ activeFilter }: { activeFilter: string }) {
         strokeLinejoin="round"
         opacity={0.35}
       />
-      {/* Main wave */}
       <path
         d={mainPath}
         fill="none"
@@ -123,7 +120,6 @@ function DashboardChart({ activeFilter }: { activeFilter: string }) {
         strokeLinejoin="round"
         style={{ filter: `drop-shadow(0 0 8px ${c.main})` }}
       />
-      {/* Glowing dots riding the wave */}
       {dotPoints.map((p, i) => (
         <circle
           key={i}
@@ -140,19 +136,21 @@ function DashboardChart({ activeFilter }: { activeFilter: string }) {
 
 export function HomePage() {
   const navigate = useNavigate();
+  const settings = useSettings();
   const [activeFilter, setActiveFilter] = useState("SOCIAL");
   const [signals, setSignals] = useState(258);
   const filters = ["NEUTRAL", "SOCIAL", "AMBIENT"];
 
   useEffect(() => {
+    if (settings.scanningPaused) return;
     const interval = setInterval(() => {
       setSignals((s) => s + Math.floor(Math.random() * 3));
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [settings.scanningPaused]);
 
   return (
-    <div className="flex flex-col items-center px-4 pt-6 pb-28 min-h-full" style={{ fontFamily: "'Outfit', sans-serif" }}>
+    <div className="flex flex-col items-center px-4 pt-6 pb-6 min-h-full" style={{ fontFamily: "'Outfit', sans-serif" }}>
       {/* Header */}
       <div className="w-full flex justify-between items-start mb-2">
         <div className="w-10" />
@@ -185,9 +183,10 @@ export function HomePage() {
           <span className="text-slate-600 tracking-widest" style={{ fontSize: 12 }}>
             ZARIF'S DASHBOARD
           </span>
+          <span className="text-slate-400 ml-auto" style={{ fontSize: 9 }}>SIMULATED</span>
         </div>
 
-        <DashboardChart activeFilter={activeFilter} />
+        <DashboardChart activeFilter={activeFilter} paused={settings.scanningPaused} />
 
         {/* Filters */}
         <div className="flex justify-center gap-3 mt-2">
@@ -260,14 +259,14 @@ export function HomePage() {
       </div>
 
       {/* Vision System Card */}
-      <GlassCard className="w-full p-4 cursor-pointer mb-4" onClick={() => navigate("/vision")}>
+      <GlassCard className="w-full p-4 pb-8 cursor-pointer mb-4" onClick={() => navigate("/vision")}>
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mx-[0px] my-[14px] ml-[14px]">
               <div className="w-5 h-5 rounded-full border border-slate-400/50 flex items-center justify-center">
                 <div className="w-2 h-2 rounded-full bg-slate-500" />
               </div>
-              <span className="text-slate-700 tracking-widest" style={{ fontSize: 12 }}>
+              <span className="text-slate-700 tracking-widest" style={{ fontSize: 16 }}>
                 VISION SYSTEM
               </span>
             </div>
@@ -290,7 +289,6 @@ export function HomePage() {
                       style={{ width: "83%", background: "linear-gradient(90deg, #30752F, #5ADB58)" }}
                     />
                   </div>
-                  {/* Battery tip */}
                   <div
                     className="rounded-r-sm"
                     style={{ width: 3, height: 5, background: "#30752F" }}
@@ -308,15 +306,26 @@ export function HomePage() {
               />
             </div>
           </div>
-          <div className="flex flex-col items-center mx-[0px] mt-[-5px] mb-[0px]">
-            <img
-              src={imgGlasses}
-              alt="Echo Lens"
-              className="w-28 h-auto object-contain mx-[30px] my-[-60px]"
-            />
-            <span className="text-slate-600 tracking-widest text-center mx-[0px] mt-[45px] mb-[20px]" style={{ fontSize: 11 }}>
-              ECHO LENS
-            </span>
+          <div className="flex flex-col items-center justify-center">
+            <div
+              className="relative flex items-center justify-center"
+              style={{ width: 140, height: 100 }}
+            >
+              {/* Soft glow behind glasses */}
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: "radial-gradient(circle, rgba(180,195,220,0.45) 0%, transparent 70%)",
+                  filter: "blur(8px)",
+                }}
+              />
+              <img
+                src={imgGlasses}
+                alt="Echo Lens"
+                className="relative w-36 h-auto object-contain"
+                style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))" }}
+              />
+            </div>
           </div>
         </div>
       </GlassCard>
@@ -352,7 +361,6 @@ export function HomePage() {
               <span className="text-slate-800" style={{ fontSize: 28, lineHeight: 1 }}>73</span>
               <span className="text-slate-500 pb-0.5" style={{ fontSize: 10 }}>BPM</span>
             </div>
-            {/* Mini ECG line */}
             <svg viewBox="0 0 120 30" className="w-full mt-1" style={{ height: 24 }}>
               <defs>
                 <linearGradient id="miniEcgGrad" x1="0" y1="0" x2="1" y2="0">
@@ -382,7 +390,6 @@ export function HomePage() {
               <span className="text-slate-500 pb-0.5" style={{ fontSize: 14 }}>/78</span>
             </div>
             <span className="text-slate-500 block mt-1" style={{ fontSize: 9 }}>mmHg</span>
-            {/* Mini pressure bar */}
             <div className="w-full h-1.5 rounded-full mt-1.5 overflow-hidden" style={{ background: "rgba(0,0,0,0.08)" }}>
               <div
                 className="h-full rounded-full"

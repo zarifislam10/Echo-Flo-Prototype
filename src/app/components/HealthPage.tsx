@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Home, Settings } from "lucide-react";
 import { GlassCard } from "./GlassCard";
 import { EchoLogo } from "./EchoLogo";
+import { useSettings } from "../settingsStore";
 
 function HeartRateWave({ bpm }: { bpm: number }) {
   const [offset, setOffset] = useState(0);
@@ -37,21 +38,17 @@ function HeartRateWave({ bpm }: { bpm: number }) {
   );
 }
 
-function BloodPressureBar({ systolic, diastolic }: { systolic: number; diastolic: number }) {
-  // Map systolic value to position on the 80-180 scale
+function BloodPressureBar({ systolic }: { systolic: number }) {
   const position = ((systolic - 80) / (180 - 80)) * 100;
   return (
     <div className="w-full mt-4">
-      {/* Bar track */}
       <div className="relative h-3 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.06)" }}>
-        {/* Gradient fill */}
         <div
           className="absolute inset-0 rounded-full"
           style={{
             background: "linear-gradient(90deg, #1274F3 0%, #4A9AF5 25%, #ffffff 45%, #e8dcc8 55%, #CBD5E1 75%, #94A3B8 100%)",
           }}
         />
-        {/* Glowing indicator dot */}
         <div
           className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full"
           style={{
@@ -62,7 +59,6 @@ function BloodPressureBar({ systolic, diastolic }: { systolic: number; diastolic
           }}
         />
       </div>
-      {/* Scale labels */}
       <div className="flex justify-between mt-2 px-0.5">
         {[80, 100, 110, 120, 130, 150, 180].map((v) => (
           <span key={v} className="text-slate-400" style={{ fontSize: 10 }}>
@@ -76,21 +72,23 @@ function BloodPressureBar({ systolic, diastolic }: { systolic: number; diastolic
 
 export function HealthPage() {
   const navigate = useNavigate();
+  const settings = useSettings();
   const [heartRate, setHeartRate] = useState(73);
   const [systolic, setSystolic] = useState(118);
   const [diastolic, setDiastolic] = useState(78);
 
   useEffect(() => {
+    if (settings.scanningPaused) return;
     const interval = setInterval(() => {
       setHeartRate((h) => Math.max(60, Math.min(90, h + Math.floor(Math.random() * 5) - 2)));
       setSystolic((s) => Math.max(110, Math.min(130, s + Math.floor(Math.random() * 3) - 1)));
       setDiastolic((d) => Math.max(70, Math.min(85, d + Math.floor(Math.random() * 3) - 1)));
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [settings.scanningPaused]);
 
   return (
-    <div className="flex flex-col items-center px-4 pt-6 pb-28 min-h-full" style={{ fontFamily: "'Outfit', sans-serif" }}>
+    <div className="flex flex-col items-center px-4 pt-6 pb-6 min-h-full" style={{ fontFamily: "'Outfit', sans-serif" }}>
       {/* Header */}
       <div className="w-full flex justify-between items-start mb-2">
         <button
@@ -117,7 +115,14 @@ export function HealthPage() {
 
       {/* Status Badge */}
       <div className="flex justify-center mb-2 mt-2">
-        <div className="px-5 py-2 rounded-full border border-green-400/60" style={{ background: "rgba(34,197,94,0.25)" }}><span className="text-white tracking-[0.2em]" style={{ fontSize: 12, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>NORMAL STATUS</span></div>
+        <div className="px-5 py-2 rounded-full border border-green-400/60" style={{ background: "rgba(34,197,94,0.25)" }}>
+          <span className="text-white tracking-[0.2em]" style={{ fontSize: 12, textShadow: "0 1px 4px rgba(0,0,0,0.3)" }}>NORMAL STATUS</span>
+        </div>
+      </div>
+
+      {/* Simulated notice */}
+      <div className="flex justify-center mb-4">
+        <span className="text-slate-400 tracking-wider" style={{ fontSize: 10 }}>SIMULATED DATA</span>
       </div>
 
       {/* Heart Rate Card */}
@@ -160,7 +165,7 @@ export function HealthPage() {
             mmHg
           </span>
         </div>
-        <BloodPressureBar systolic={systolic} diastolic={diastolic} />
+        <BloodPressureBar systolic={systolic} />
       </GlassCard>
     </div>
   );
